@@ -20,12 +20,12 @@ This project is a custom-built command-line downloader written in C++. The goal 
 
 ## 📐 Architecture
 
-CLI (main.cpp)
-    ↓
-Downloader
-    ↓
-HttpClient (libcurl)
-    ↓
+CLI (main.cpp) <br />
+    ↓ <br />
+Downloader  <br />
+    ↓ <br />
+HttpClient (libcurl) <br />
+    ↓ <br />
 FileWriter 
 
 Each module has a single responsibility 
