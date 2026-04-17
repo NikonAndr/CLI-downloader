@@ -3,5 +3,5 @@ build/
 *.o
 *.out
 
-main.cpp
 test_file.txt
+kanye.jpg
