@@ -22,9 +22,6 @@ void Downloader::download(const std::string& url, const std::string& output_path
     auto header_callback = [&total_size](const char* buffer, size_t size)
     {
         std::string buffer_str(buffer, size);
-
-        //debug
-        std::cout << "header_cb: " << buffer_str <<" \n";
         
         size_t colon_pos = buffer_str.find(":");
         if (colon_pos == std::string::npos)
@@ -56,5 +53,5 @@ void Downloader::download(const std::string& url, const std::string& output_path
     httpClient.download(url, data_callback, header_callback);
     
     //debug 
-    std::cout << "downloaded: " << downloaded_bytes << " of total of " << total_size << " bytes\n";
+    std::cout << "Downloaded: " << downloaded_bytes << " of total " << total_size << " bytes\n";
 }
