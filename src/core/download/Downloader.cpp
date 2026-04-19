@@ -2,8 +2,9 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
-void Downloader::download(const std::string& url, const std::string& output_path)
+void Downloader::download(const std::string& url, const std::string& output_path, size_t threads_num)
 {
     HttpClient httpClient;
 
@@ -61,10 +62,46 @@ void Downloader::download(const std::string& url, const std::string& output_path
     //debug 
     std::cout << "Total_size: " << total_size << "\nrange_support : " << (range_supported ? "true" : "false") << std::endl;
 
+    //Multi-thread download
     if (total_size > 0 && range_supported)
     {
-        std::cout << "MULTI-THREAD download\n";
+        std::vector<Chunk> chunks;
+        
+        //edge cases
+        if (threads_num == 0)
+        {
+            std::cout << "[Downloader] threads number can't be 0, setting threads num to 1\n";
+            threads_num = 1;
+        }
+
+        if (total_size < threads_num)
+        {
+            std::cout << "[Downloader] threads number exceeds total size -> threads num = total_size\n";
+            threads_num = total_size;
+        }
+
+        size_t chunk_size = total_size / threads_num;
+
+        for (size_t i = 0; i < threads_num; i++)
+        {
+            Chunk chunk {i * chunk_size, (i + 1) * chunk_size - 1};
+
+            if (i == threads_num -1)
+            {
+                chunk.end = total_size - 1;
+            }
+
+            chunks.push_back(chunk);
+        }
+
+        //debug 
+        std::cout << "multi-thread-download (TODO)\n";
+        for (size_t i = 0; i < threads_num; i++)
+        {
+            std::cout << "T" << i + 1 << ": " << chunks[i].start << "-" << chunks[i].end << "\n";
+        } 
     }
+    //Single-thread download
     else
     {
         FileWriter fw(output_path);
@@ -74,6 +111,7 @@ void Downloader::download(const std::string& url, const std::string& output_path
         {
             downloaded_bytes += size;
             fw.write(data, size);
+
             //Debug
             std::cout << "Downloaded: " << downloaded_bytes << "/" << total_size << " bytes\n";
         };
@@ -85,5 +123,4 @@ void Downloader::download(const std::string& url, const std::string& output_path
             throw std::runtime_error("ERROR [Downloader]: body req status" + std::to_string(body_request_status));
         }
     }
-
 }

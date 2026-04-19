@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     try 
     {
         Downloader downloader;
-        downloader.download(argv[1], argv[2]);
+        downloader.download(argv[1], argv[2], 4);
 
         std::cout << "Download Complete!\n";
     }
