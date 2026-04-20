@@ -2,6 +2,11 @@ build/
 .vscode/
 *.o
 *.out
+.DS_Store
 
 test_file.txt
 kanye.jpg
+gh_test.zip
+test.dmg
+test.bin
+test.zip
