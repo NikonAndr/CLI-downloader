@@ -2,6 +2,7 @@
 
 #include "core/file/FileWriter.h"
 #include "core/http/HttpClient.h"
+#include "core/download/Worker.h"
 
 struct Chunk
 {

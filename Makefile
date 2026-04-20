@@ -5,6 +5,7 @@ LDFLAGS = -lcurl
 SRC = main.cpp \
 	src/core/file/FileWriter.cpp \
 	src/core/http/HttpClient.cpp \
+	src/core/download/Worker.cpp \
 	src/core/download/Downloader.cpp
 
 OUT = build/downloader

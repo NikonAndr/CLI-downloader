@@ -1,6 +1,7 @@
 #include "core/download/Worker.h"
 
 #include <functional>
+#include <iostream>
 
 Worker::Worker(const std::string& url, size_t start, size_t end, FileWriter& fw) : 
     url(url), start(start), end(end), fw(fw) {}
@@ -12,6 +13,9 @@ void Worker::run()
     {
         fw.write_at(data, size, start + downloaded);
         downloaded += size;
+
+        //debug 
+        std::cout << "[Worker] DEBUG: onData cb write_at(" << start + downloaded << ")\n"; 
     };
 
     long range_start = static_cast<long>(start);

@@ -67,7 +67,16 @@ long HttpClient::request(HttpMethod method, const std::string& url, const std::f
 
     CurlContext ctx{ onData, onHeader };
 
+    struct curl_slist* headers = nullptr;
+
+    headers = curl_slist_append(headers, "Accept: */*");
+    headers = curl_slist_append(headers, "Accept-Encoding: identity");
+    headers = curl_slist_append(headers, "Connection: keep-alive");
+
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "Mozilla/5.0");
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 0L);
@@ -79,7 +88,7 @@ long HttpClient::request(HttpMethod method, const std::string& url, const std::f
 
     if (range_start != -1) 
     {
-        range = "bytes=" + std::to_string(range_start) + "-";
+        range = std::to_string(range_start) + "-";
         if (range_end != -1)
         {
             range += std::to_string(range_end);
@@ -98,6 +107,11 @@ long HttpClient::request(HttpMethod method, const std::string& url, const std::f
     }
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
+
+    if (headers)
+    {
+        curl_slist_free_all(headers);
+    }
     curl_easy_cleanup(curl);
 
     return status;

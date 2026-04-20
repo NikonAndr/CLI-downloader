@@ -11,8 +11,11 @@ void Downloader::download(const std::string& url, const std::string& output_path
     size_t total_size = 0;
     size_t downloaded_bytes = 0;
     bool range_supported = false;
+    bool range_works = false;
+
     long head_request_status = 0;
     long body_request_status = 0;
+    long range_test_status = 0;
 
    std::function<void(const char*, size_t)> header_callback = 
         [&](const char* buffer, size_t size)
@@ -62,8 +65,21 @@ void Downloader::download(const std::string& url, const std::string& output_path
     //debug 
     std::cout << "Total_size: " << total_size << "\nrange_support : " << (range_supported ? "true" : "false") << std::endl;
 
+    //range test request
+    if (range_supported)
+    {
+        range_test_status = httpClient.request(HttpMethod::GET, url, nullptr, nullptr, 0, 0);
+
+        std::cout << "[DEBUG] range_test status: " << range_test_status << "\n";
+
+        if (range_test_status == 206)
+        {
+            range_works = true;
+        }
+    }
+
     //Multi-thread download
-    if (total_size > 0 && range_supported)
+    if (total_size > 0 && range_supported && range_works)
     {
         std::vector<Chunk> chunks;
         
@@ -94,12 +110,22 @@ void Downloader::download(const std::string& url, const std::string& output_path
             chunks.push_back(chunk);
         }
 
-        //debug 
-        std::cout << "multi-thread-download (TODO)\n";
+        //debug chunks 
         for (size_t i = 0; i < threads_num; i++)
         {
             std::cout << "T" << i + 1 << ": " << chunks[i].start << "-" << chunks[i].end << "\n";
         } 
+
+        FileWriter fw(output_path);
+        fw.preallocate(total_size);
+        
+        for (const auto& chunk : chunks)
+        {
+            Worker worker(url, chunk.start, chunk.end, fw);
+            worker.run();
+        }
+        
+        
     }
     //Single-thread download
     else
