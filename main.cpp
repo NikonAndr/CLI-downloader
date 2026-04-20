@@ -4,16 +4,22 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc < 3)
+    if (argc < 4)
     {
-        std::cerr << "Usage: ./build/downloader <URL> <output_file>";
+        std::cerr << "Usage: ./build/downloader <URL> <output_file> <threads_num>";
         return 1;
     }
 
     try 
     {
+        size_t threads = std::stoul(argv[3]);
+        if (threads == 0)
+        {
+            throw std::runtime_error("threads_num must be > 0");
+        }
+
         Downloader downloader;
-        downloader.download(argv[1], argv[2]);
+        downloader.download(argv[1], argv[2], threads);
 
         std::cout << "Download Complete!\n";
     }
