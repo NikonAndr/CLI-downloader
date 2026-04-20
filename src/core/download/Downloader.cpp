@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <thread>
 
 void Downloader::download(const std::string& url, const std::string& output_path, size_t threads_num)
 {
@@ -116,16 +117,29 @@ void Downloader::download(const std::string& url, const std::string& output_path
             std::cout << "T" << i + 1 << ": " << chunks[i].start << "-" << chunks[i].end << "\n";
         } 
 
+
         FileWriter fw(output_path);
         fw.preallocate(total_size);
+        std::vector<std::thread> threads;
         
+        size_t id_i = 0;
         for (const auto& chunk : chunks)
         {
-            Worker worker(url, chunk.start, chunk.end, fw);
-            worker.run();
+            size_t worker_id = id_i;
+
+            threads.emplace_back([&, chunk, worker_id]()
+            {
+                Worker worker(url, chunk.start, chunk.end, fw);
+                worker.set_id(worker_id);
+                worker.run();
+            });
+            id_i++;
         }
-        
-        
+
+        for (auto& t : threads)
+        {
+            t.join();
+        }
     }
     //Single-thread download
     else

@@ -15,7 +15,7 @@ void Worker::run()
         downloaded += size;
 
         //debug 
-        std::cout << "[Worker] DEBUG: onData cb write_at(" << start + downloaded << ")\n"; 
+        std::cout << "[Worker " << id << "] DEBUG: onData cb write_at(" << start + downloaded << ")\n"; 
     };
 
     long range_start = static_cast<long>(start);
@@ -28,5 +28,15 @@ void Worker::run()
     {
         throw std::runtime_error("[Worker] ERROR: http request failed");
     }
+}
+
+void Worker::set_id(size_t value)
+{
+    id = value;
+}
+
+size_t Worker::get_id()
+{
+    return id;
 }
 
