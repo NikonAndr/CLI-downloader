@@ -63,15 +63,11 @@ void Downloader::download(const std::string& url, const std::string& output_path
     {
         throw std::runtime_error("ERROR [Downloader]: head req status" + std::to_string(head_request_status));
     }
-    //debug 
-    std::cout << "Total_size: " << total_size << "\nrange_support : " << (range_supported ? "true" : "false") << std::endl;
 
     //range test request
     if (range_supported)
     {
         range_test_status = httpClient.request(HttpMethod::GET, url, nullptr, nullptr, 0, 0);
-
-        std::cout << "[DEBUG] range_test status: " << range_test_status << "\n";
 
         if (range_test_status == 206)
         {
@@ -83,6 +79,7 @@ void Downloader::download(const std::string& url, const std::string& output_path
     if (total_size > 0 && range_supported && range_works)
     {
         std::vector<Chunk> chunks;
+        bool failed = false;
         
         //edge cases
         if (threads_num == 0)
@@ -96,6 +93,9 @@ void Downloader::download(const std::string& url, const std::string& output_path
             std::cout << "[Downloader] threads number exceeds total size -> threads num = total_size\n";
             threads_num = total_size;
         }
+
+        //log 
+        std::cout << "Multi-Thread download ( " << threads_num << " threads ) ...\n";
 
         size_t chunk_size = total_size / threads_num;
 
@@ -111,34 +111,35 @@ void Downloader::download(const std::string& url, const std::string& output_path
             chunks.push_back(chunk);
         }
 
-        //debug chunks 
-        for (size_t i = 0; i < threads_num; i++)
-        {
-            std::cout << "T" << i + 1 << ": " << chunks[i].start << "-" << chunks[i].end << "\n";
-        } 
-
-
         FileWriter fw(output_path);
         fw.preallocate(total_size);
         std::vector<std::thread> threads;
         
-        size_t id_i = 0;
         for (const auto& chunk : chunks)
         {
-            size_t worker_id = id_i;
-
-            threads.emplace_back([&, chunk, worker_id]()
+            threads.emplace_back([&, chunk]()
             {
-                Worker worker(url, chunk.start, chunk.end, fw);
-                worker.set_id(worker_id);
-                worker.run();
+                try 
+                {
+                    Worker worker(url, chunk.start, chunk.end, fw);
+                    worker.run();
+                }
+                catch (const std::exception& e)
+                {
+                    std::cerr << "[Downloader] THREAD ERROR: " << e.what() << std::endl;
+                    failed = true;
+                }
             });
-            id_i++;
         }
 
         for (auto& t : threads)
         {
             t.join();
+        }
+
+        if (failed)
+        {
+            throw std::runtime_error("[Downloader] One or more workers failed");
         }
     }
     //Single-thread download
@@ -146,14 +147,14 @@ void Downloader::download(const std::string& url, const std::string& output_path
     {
         FileWriter fw(output_path);
 
+        //log
+        std::cout << "Switched to Single-Thread, downloading...\n";
+
         std::function<void(const char*, size_t)> data_callback =
         [&](const char* data, size_t size)
         {
             downloaded_bytes += size;
             fw.write(data, size);
-
-            //Debug
-            std::cout << "Downloaded: " << downloaded_bytes << "/" << total_size << " bytes\n";
         };
 
         body_request_status = httpClient.request(HttpMethod::GET, url, &data_callback, nullptr, -1, -1);

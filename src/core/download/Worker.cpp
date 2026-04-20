@@ -13,9 +13,6 @@ void Worker::run()
     {
         fw.write_at(data, size, start + downloaded);
         downloaded += size;
-
-        //debug 
-        std::cout << "[Worker " << id << "] DEBUG: onData cb write_at(" << start + downloaded << ")\n"; 
     };
 
     long range_start = static_cast<long>(start);
@@ -24,19 +21,8 @@ void Worker::run()
 
     req_status = httpClient.request(HttpMethod::GET, url, &onData, nullptr, range_start, range_end);
 
-    if (req_status >= 400)
+    if (req_status != 206)
     {
         throw std::runtime_error("[Worker] ERROR: http request failed");
     }
 }
-
-void Worker::set_id(size_t value)
-{
-    id = value;
-}
-
-size_t Worker::get_id()
-{
-    return id;
-}
-
